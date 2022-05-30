@@ -1,0 +1,33 @@
+name: test publish
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+
+    - name: dotnet publish
+      run: dotnet publish --configuration=Release -r linux-musl-x64 --self-contained -o ./publish/
+
+    - name: log into scw container registry
+      uses: docker/login-action
+      with:
+        registry: rg.fr-par.scw.cloud/onx-private
+        username: nologin
+        password: ${{ secrets.SCW_SECRET }}
+
+    - name: Build and push docker image
+      uses: docker/build-push-action
+      with:
+        context: .
+        push: true
+        tags: "proj1:latest"
